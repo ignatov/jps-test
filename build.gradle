@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+application {
+    mainClassName = 'org.ignatov.jps.Main'
+}
+
+repositories {
+    mavenCentral()
+}
