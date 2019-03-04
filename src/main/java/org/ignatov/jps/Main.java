@@ -121,9 +121,10 @@ public class Main {
 
           counter.add(1);
           boolean small = attrs.size() < RATHER_SMALL_FILE_SIZE;
-          String hex = toHex(checksum(file, md, small));
+          byte[] checksum = checksum(file, md, small);
 
           if (PRINT_HEX) {
+            String hex = toHex(checksum);
             System.out.println(hex + " " + file);
           }
 
