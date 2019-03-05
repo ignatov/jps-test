@@ -65,7 +65,7 @@ public class Main {
     String path = args[0];
     Path realPath = Paths.get(path).toRealPath();
 
-    System.out.println("Walking on " + path);
+    System.out.println("Walking on " + realPath);
 
     traverse(realPath, Runtime.getRuntime().availableProcessors(), false);
     traverse(realPath, 4, false);
