@@ -21,6 +21,19 @@ public class Main {
   private static final int RATHER_SMALL_FILE_SIZE = 1_000_000;
 
   private static byte[] checksum(Path path, MessageDigest md, boolean readAllBytes) throws IOException {
+    try {
+      return checksumInner(path, md, readAllBytes);
+    } catch (IOException e) {
+      if (e.getMessage().contains("The process cannot access the file because another process has locked a portion of the file")) {
+        System.out.println("Another process has locked a portion of the " + path);
+        return new byte[]{};
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private static byte[] checksumInner(Path path, MessageDigest md, boolean readAllBytes) throws IOException {
     return readAllBytes ? md.digest(Files.readAllBytes(path)) : readChecksumWithBuffer(path, md);
   }
 
