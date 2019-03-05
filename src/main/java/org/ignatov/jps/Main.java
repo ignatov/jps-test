@@ -64,22 +64,41 @@ public class Main {
 
     String path = args[0];
     Path realPath = Paths.get(path).toRealPath();
-    System.out.println("Walking on " + realPath);
-    RecursiveWalk w = new RecursiveWalk(realPath);
-    ForkJoinPool p = new ForkJoinPool();
+
+    System.out.println("Walking on " + path);
+
+    traverse(realPath, Runtime.getRuntime().availableProcessors(), false);
+    traverse(realPath, 4, false);
+    traverse(realPath, 2, false);
+    traverse(realPath, 1, false);
+
+    System.out.println();
+
+    traverse(realPath, Runtime.getRuntime().availableProcessors(), true);
+    traverse(realPath, 4, true);
+    traverse(realPath, 2, true);
+    traverse(realPath, 1, true);
+  }
+
+  private static void traverse(Path path, int parallelism, boolean calcHashes) throws NoSuchAlgorithmException {
+    RecursiveWalk w = new RecursiveWalk(path, calcHashes);
+    ForkJoinPool p = new ForkJoinPool(parallelism);
     long start = System.currentTimeMillis();
     p.invoke(w);
     long end = System.currentTimeMillis();
-    System.out.println("Traversed " + w.counter.longValue() + " files in " + (end - start) + " ms");
+    String pp = String.format("%02d", parallelism);
+    System.out.println("Hash = " + calcHashes + "\t Parallelism = " + pp + "\t " + w.counter.longValue() + " files in " + (end - start) + " ms");
   }
 
   private static class RecursiveWalk extends RecursiveAction {
     private final Path dir;
+    private boolean calcHashes;
     private final MessageDigest md = MessageDigest.getInstance("MD5");
     private final LongAdder counter = new LongAdder();
 
-    RecursiveWalk(Path dir) throws NoSuchAlgorithmException {
+    RecursiveWalk(Path dir, boolean calcHashes) throws NoSuchAlgorithmException {
       this.dir = dir;
+      this.calcHashes = calcHashes;
       if (PRINT_DIR) System.out.println(dir);
     }
 
@@ -106,7 +125,7 @@ public class Main {
           if (dir.equals(RecursiveWalk.this.dir)) return FileVisitResult.CONTINUE;
 
           try {
-            RecursiveWalk w = new RecursiveWalk(dir);
+            RecursiveWalk w = new RecursiveWalk(dir, calcHashes);
             w.fork();
             walks.add(w);
           } catch (NoSuchAlgorithmException e) {
@@ -120,12 +139,17 @@ public class Main {
           if (attrs.isSymbolicLink()) return FileVisitResult.CONTINUE;
 
           counter.add(1);
-          boolean small = attrs.size() < RATHER_SMALL_FILE_SIZE;
-          byte[] checksum = checksum(file, md, small);
 
-          if (PRINT_HEX) {
-            String hex = toHex(checksum);
-            System.out.println(hex + " " + file);
+          boolean small = attrs.size() < RATHER_SMALL_FILE_SIZE;
+
+          if (calcHashes) {
+            byte[] checksum = checksum(file, md, small);
+            if (PRINT_HEX) {
+              String hex = toHex(checksum);
+              System.out.println(hex + " " + file);
+            }
+          } else {
+            attrs.lastModifiedTime();
           }
 
           return FileVisitResult.CONTINUE;
