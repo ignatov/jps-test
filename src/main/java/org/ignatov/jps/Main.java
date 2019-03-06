@@ -61,7 +61,9 @@ public class Main {
   }
 
   private static boolean skip(Path dir) {
-    return dir.endsWith(".git") ||
+    return
+        dir.endsWith(".git") ||
+        dir.endsWith(".gradle") ||
         dir.endsWith("community/build") ||
         dir.endsWith("build/jdk") ||
         dir.endsWith("out/classes") ||
